@@ -178,6 +178,9 @@ for region in $REGIONS; do
     kms list-aliases \
     --query "Aliases[?!starts_with(AliasName, 'alias/aws/')].AliasName"
 
+  check "$region" "SNS: tópicos (sem custo parado, não devem sobrar)" \
+    sns list-topics --query "Topics[].TopicArn"
+
   check "$region" "CloudWatch Logs: log groups (armazenamento)" \
     logs describe-log-groups \
     --query "logGroups[].[logGroupName,join('', [to_string(storedBytes), ' bytes'])]"
@@ -210,6 +213,14 @@ check_global "IAM: provider OIDC do GitHub (sem custo, não deve sobrar)" \
 check_global "IAM: roles que confiam no GitHub Actions (sem custo, não devem sobrar)" \
   iam list-roles \
   --query "Roles[?contains(to_string(AssumeRolePolicyDocument), 'token.actions.githubusercontent.com')].RoleName"
+
+check_global "IAM: provider OIDC de cluster EKS (sem custo, não deve sobrar)" \
+  iam list-open-id-connect-providers \
+  --query "OpenIDConnectProviderList[?contains(Arn, 'oidc.eks.')].Arn"
+
+check_global "IAM: roles IRSA que confiam em cluster EKS (sem custo, não devem sobrar)" \
+  iam list-roles \
+  --query "Roles[?contains(to_string(AssumeRolePolicyDocument), 'oidc.eks.')].RoleName"
 
 if [ "$FOUND" -eq "$before" ]; then
   echo "  nada encontrado"
