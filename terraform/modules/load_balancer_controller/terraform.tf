@@ -11,12 +11,4 @@ terraform {
       version = "~> 3.2"
     }
   }
-
-  # bucket vem do bootstrap, via -backend-config no init.
-  backend "s3" {
-    key          = "devops-03-eks-gitops/terraform.tfstate"
-    region       = "us-east-1"
-    encrypt      = true
-    use_lockfile = true
-  }
 }
