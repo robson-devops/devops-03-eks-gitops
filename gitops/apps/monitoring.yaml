@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 91.8.2
+    helm:
+      releaseName: monitoring
+      valuesObject:
+        # Control plane gerenciado pelo EKS: estes alvos não são acessíveis.
+        kubeEtcd:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeProxy:
+          enabled: false
+        defaultRules:
+          rules:
+            etcd: false
+            kubeControllerManager: false
+            kubeProxy: false
+            kubeSchedulerAlerting: false
+            kubeSchedulerRecording: false
+        prometheus:
+          prometheusSpec:
+            # Sem volume: um PVC deixaria um EBS para trás no destroy.
+            retention: 6h
+            # Lê ServiceMonitor e PrometheusRule de qualquer namespace.
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            resources:
+              requests:
+                cpu: 100m
+                memory: 400Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  # A senha do Grafana é gerada pelo chart a cada renderização; sem isto a
+  # Application ficaria sempre OutOfSync e a senha mudaria a cada sync.
+  ignoreDifferences:
+    - kind: Secret
+      name: monitoring-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # CRDs do Prometheus Operator passam do limite do apply tradicional.
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true

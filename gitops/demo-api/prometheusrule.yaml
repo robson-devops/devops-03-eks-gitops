@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-api
+  labels:
+    app.kubernetes.io/name: demo-api
+spec:
+  groups:
+    - name: demo-api
+      rules:
+        - alert: DemoApiHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="demo-api", status=~"5.."}[2m]))
+              /
+            sum(rate(http_requests_total{namespace="demo-api"}[2m]))
+              > 0.05
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Mais de 5% das requisições da demo-api terminam em erro 5xx.
+        - alert: DemoApiHighLatencyP95
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{namespace="demo-api"}[5m]))
+            ) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: O p95 de latência da demo-api passou de 500 ms.
+        - alert: DemoApiDown
+          expr: |
+            sum(up{namespace="demo-api", job="demo-api"}) == 0
+              or
+            absent(up{namespace="demo-api", job="demo-api"})
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: Nenhum pod da demo-api responde ao Prometheus.

@@ -5,12 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt main.py ./
+RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 
-COPY main.py .
-
-RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 USER 10001
 
 EXPOSE 8000

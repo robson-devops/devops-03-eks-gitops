@@ -10,6 +10,9 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - pdb.yaml
+  - servicemonitor.yaml
+  - prometheusrule.yaml
+  - dashboard.yaml
 
 # O pipeline troca newTag pelo SHA do commit (kustomize edit set image).
 images:
