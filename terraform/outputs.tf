@@ -27,3 +27,8 @@ output "kubeconfig_command" {
   description = "Comando para configurar o kubectl"
   value       = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"
 }
+
+output "argocd_admin_password_command" {
+  description = "Comando para ler a senha inicial do usuário admin do Argo CD"
+  value       = "kubectl -n ${module.argocd.namespace} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+}

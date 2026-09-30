@@ -25,3 +25,13 @@ module "load_balancer_controller" {
   oidc_issuer_url   = module.eks.oidc_issuer_url
   oidc_provider_arn = module.eks.oidc_provider_arn
 }
+
+module "argocd" {
+  source = "./modules/argocd"
+
+  repository_url = var.gitops_repository_url
+
+  # No destroy o Argo CD sai antes do controller, que ainda remove os ALBs
+  # dos Ingress apagados pelo Argo CD.
+  depends_on = [module.load_balancer_controller]
+}

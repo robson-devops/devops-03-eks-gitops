@@ -42,3 +42,9 @@ variable "operator_cidr" {
   description = "CIDR de quem opera o cluster (ex: 203.0.113.10/32), único autorizado no endpoint público da API"
   type        = list(string)
 }
+
+variable "gitops_repository_url" {
+  description = "Repositório lido pelo Argo CD. Em um fork, troque pela URL do seu repositório"
+  type        = string
+  default     = "https://github.com/robson-devops/devops-03-eks-gitops.git"
+}
