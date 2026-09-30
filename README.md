@@ -1,3 +1,5 @@
+![Arquitetura](docs/img/arquitetura.png)
+
 # devops-03-eks-gitops
 
 API em Kubernetes (EKS) entregue por GitOps: o pipeline só publica a imagem e
