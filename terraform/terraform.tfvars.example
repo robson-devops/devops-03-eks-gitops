@@ -1,0 +1,3 @@
+# Copie para terraform.tfvars (fora do Git) e informe o seu IP público:
+#   curl -s https://checkip.amazonaws.com
+operator_cidr = ["203.0.113.10/32"]

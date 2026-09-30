@@ -17,3 +17,13 @@ output "vpc_id" {
   description = "ID da VPC do projeto"
   value       = module.network.vpc_id
 }
+
+output "cluster_name" {
+  description = "Nome do cluster EKS"
+  value       = module.eks.cluster_name
+}
+
+output "kubeconfig_command" {
+  description = "Comando para configurar o kubectl"
+  value       = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"
+}

@@ -31,3 +31,14 @@ variable "vpc_cidr" {
     error_message = "vpc_cidr deve ser um CIDR válido com máscara /16 ou maior (ex: 10.40.0.0/16)."
   }
 }
+
+variable "cluster_version" {
+  description = "Versão do Kubernetes do cluster EKS"
+  type        = string
+  default     = "1.35"
+}
+
+variable "operator_cidr" {
+  description = "CIDR de quem opera o cluster (ex: 203.0.113.10/32), único autorizado no endpoint público da API"
+  type        = list(string)
+}
