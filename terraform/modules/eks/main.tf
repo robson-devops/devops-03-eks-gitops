@@ -156,12 +156,20 @@ resource "aws_eks_node_group" "main" {
   ]
 }
 
-# coredns depois dos nodes: sem node para rodar, o add-on não fica ativo.
-resource "aws_eks_addon" "coredns" {
+# Depois dos nodes: sem node para rodar, estes add-ons não ficam ativos.
+# metrics-server alimenta o HPA.
+resource "aws_eks_addon" "after_node" {
+  for_each = toset(["coredns", "metrics-server"])
+
   cluster_name                = aws_eks_cluster.main.name
-  addon_name                  = "coredns"
+  addon_name                  = each.value
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
 
   depends_on = [aws_eks_node_group.main]
+}
+
+moved {
+  from = aws_eks_addon.coredns
+  to   = aws_eks_addon.after_node["coredns"]
 }

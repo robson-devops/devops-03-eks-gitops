@@ -32,3 +32,8 @@ output "argocd_admin_password_command" {
   description = "Comando para ler a senha inicial do usuário admin do Argo CD"
   value       = "kubectl -n ${module.argocd.namespace} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
 }
+
+output "ecr_repository_url" {
+  description = "URL do repositório ECR da aplicação"
+  value       = module.ecr.repository_url
+}

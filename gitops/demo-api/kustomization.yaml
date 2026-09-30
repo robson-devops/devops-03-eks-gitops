@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-api
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - pdb.yaml
+
+# O pipeline troca newTag pelo SHA do commit (kustomize edit set image).
+images:
+  - name: demo-api
+    newName: 675344342862.dkr.ecr.us-east-1.amazonaws.com/devops-03-dev
+    newTag: bootstrap

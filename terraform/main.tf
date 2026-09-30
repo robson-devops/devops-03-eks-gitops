@@ -35,3 +35,9 @@ module "argocd" {
   # dos Ingress apagados pelo Argo CD.
   depends_on = [module.load_balancer_controller]
 }
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  name = local.name_prefix
+}
