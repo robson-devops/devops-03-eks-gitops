@@ -75,7 +75,9 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "percentunit"
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1
             },
             "overrides": []
           },
@@ -91,7 +93,7 @@ data:
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "sum(rate(http_requests_total{namespace=\"demo-api\", status=~\"5..\"}[2m])) / sum(rate(http_requests_total{namespace=\"demo-api\"}[2m]))",
+              "expr": "(sum(rate(http_requests_total{namespace=\"demo-api\", status=~\"5..\"}[2m])) or vector(0)) / sum(rate(http_requests_total{namespace=\"demo-api\"}[2m]))",
               "legendFormat": "erro",
               "refId": "A"
             }
