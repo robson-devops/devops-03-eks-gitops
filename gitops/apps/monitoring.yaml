@@ -78,7 +78,7 @@ spec:
               {{- if eq .Status "resolved" }}
               Fim:         {{ .EndsAt.Format "02/01/2006 15:04:05" }} UTC
               {{- end }}
-              Consulta:    {{ .GeneratorURL }}
+              Consulta:    {{ .GeneratorURL }} (requer port-forward na 9090)
               {{ end }}
               --
               Enviado pelo Alertmanager do cluster devops-03-dev.
@@ -87,6 +87,8 @@ spec:
           prometheusSpec:
             # Sem volume: um PVC deixaria um EBS para trás no destroy.
             retention: 6h
+            # Links dos alertas usam o port-forward local.
+            externalUrl: http://localhost:9090
             # Lê ServiceMonitor e PrometheusRule de qualquer namespace.
             serviceMonitorSelectorNilUsesHelmValues: false
             podMonitorSelectorNilUsesHelmValues: false
