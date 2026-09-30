@@ -48,3 +48,9 @@ variable "gitops_repository_url" {
   type        = string
   default     = "https://github.com/robson-devops/devops-03-eks-gitops.git"
 }
+
+variable "alert_email" {
+  description = "E-mail que recebe os alertas da aplicação via SNS. Vazio desativa o envio"
+  type        = string
+  default     = ""
+}

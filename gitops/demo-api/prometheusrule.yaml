@@ -16,6 +16,7 @@ spec:
               > 0.05
           for: 2m
           labels:
+            namespace: demo-api
             severity: critical
           annotations:
             summary: Mais de 5% das requisições da demo-api terminam em erro 5xx.
@@ -26,6 +27,7 @@ spec:
             ) > 0.5
           for: 5m
           labels:
+            namespace: demo-api
             severity: warning
           annotations:
             summary: O p95 de latência da demo-api passou de 500 ms.
@@ -36,6 +38,7 @@ spec:
             absent(up{namespace="demo-api", job="demo-api"})
           for: 1m
           labels:
+            namespace: demo-api
             severity: critical
           annotations:
             summary: Nenhum pod da demo-api responde ao Prometheus.

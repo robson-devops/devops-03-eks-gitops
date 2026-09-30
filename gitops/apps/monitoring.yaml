@@ -30,6 +30,59 @@ spec:
             kubeProxy: false
             kubeSchedulerAlerting: false
             kubeSchedulerRecording: false
+        alertmanager:
+          # IRSA: a role (Terraform, módulo alert_notification) publica no SNS.
+          serviceAccount:
+            annotations:
+              eks.amazonaws.com/role-arn: arn:aws:iam::675344342862:role/devops-03-dev-alertmanager
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              receiver: "null"
+              group_by: [alertname, namespace]
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              routes:
+                - receiver: "null"
+                  matchers:
+                    - alertname = "Watchdog"
+                # Só os alertas da aplicação vão para o e-mail.
+                - receiver: email
+                  matchers:
+                    - namespace = "demo-api"
+            receivers:
+              - name: "null"
+              - name: email
+                sns_configs:
+                  - topic_arn: arn:aws:sns:us-east-1:675344342862:devops-03-dev-alerts
+                    sigv4:
+                      region: us-east-1
+                    subject: '{{ template "email.subject" . }}'
+                    message: '{{ template "email.message" . }}'
+            templates:
+              - /etc/alertmanager/config/*.tmpl
+          templateFiles:
+            email.tmpl: |-
+              {{ define "email.subject" }}[{{ if eq .Status "firing" }}ALERTA{{ else }}RESOLVIDO{{ end }}] {{ .CommonLabels.alertname }} - {{ .CommonLabels.namespace }}{{ end }}
+
+              {{ define "email.message" }}{{ range .Alerts }}
+              {{ if eq .Status "firing" }}ALERTA DISPARADO{{ else }}ALERTA RESOLVIDO{{ end }}
+
+              Alerta:      {{ .Labels.alertname }}
+              Severidade:  {{ .Labels.severity }}
+              Namespace:   {{ .Labels.namespace }}
+              Resumo:      {{ .Annotations.summary }}
+              Início:      {{ .StartsAt.Format "02/01/2006 15:04:05" }} UTC
+              {{- if eq .Status "resolved" }}
+              Fim:         {{ .EndsAt.Format "02/01/2006 15:04:05" }} UTC
+              {{- end }}
+              Consulta:    {{ .GeneratorURL }}
+              {{ end }}
+              --
+              Enviado pelo Alertmanager do cluster devops-03-dev.
+              {{ end }}
         prometheus:
           prometheusSpec:
             # Sem volume: um PVC deixaria um EBS para trás no destroy.

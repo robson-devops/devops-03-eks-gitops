@@ -37,3 +37,13 @@ output "ecr_repository_url" {
   description = "URL do repositório ECR da aplicação"
   value       = module.ecr.repository_url
 }
+
+output "alertmanager_role_arn" {
+  description = "Role IRSA do Alertmanager"
+  value       = module.alert_notification.role_arn
+}
+
+output "alert_topic_arn" {
+  description = "Tópico SNS dos alertas"
+  value       = module.alert_notification.topic_arn
+}

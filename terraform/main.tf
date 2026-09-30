@@ -41,3 +41,12 @@ module "ecr" {
 
   name = local.name_prefix
 }
+
+module "alert_notification" {
+  source = "./modules/alert_notification"
+
+  name_prefix       = local.name_prefix
+  alert_email       = var.alert_email
+  oidc_issuer_url   = module.eks.oidc_issuer_url
+  oidc_provider_arn = module.eks.oidc_provider_arn
+}

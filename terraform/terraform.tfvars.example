@@ -1,3 +1,6 @@
 # Copie para terraform.tfvars (fora do Git) e informe o seu IP público:
 #   curl -s https://checkip.amazonaws.com
 operator_cidr = ["203.0.113.10/32"]
+
+# Opcional: e-mail que recebe os alertas (confirme o link que a AWS envia).
+alert_email = "voce@exemplo.com"
