@@ -1,13 +1,19 @@
 FROM python:3.12-slim
 
+ARG APP_VERSION=dev
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    APP_VERSION=${APP_VERSION}
 
 WORKDIR /app
 
-COPY requirements.txt main.py ./
-RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
+COPY main.py .
+
+RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 USER 10001
 
 EXPOSE 8000

@@ -1,0 +1,138 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/ci-cd.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: devops-03-dev
+  KUSTOMIZE_VERSION: 5.7.1
+
+permissions:
+  contents: read
+
+# Dois pushes seguidos não disputam o commit do manifesto.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build da imagem
+        working-directory: app
+        # Sem provenance/sbom: evita manifestos sem tag no ECR imutável.
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            --provenance=false \
+            --sbom=false \
+            --build-arg APP_VERSION="${{ github.sha }}" \
+            -t "app:${{ github.sha }}" .
+
+      - name: Teste da imagem
+        run: |
+          docker run -d --name app-test -p 8000:8000 "app:${{ github.sha }}"
+
+          for _ in $(seq 1 15); do
+            curl -sf http://127.0.0.1:8000/ready >/dev/null && break
+            sleep 2
+          done
+
+          set -x
+          curl -sf http://127.0.0.1:8000/health | grep -q '"version":"${{ github.sha }}"'
+          curl -sf http://127.0.0.1:8000/ready
+          curl -sf "http://127.0.0.1:8000/work?ms=10"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/error)" = "500"
+          curl -sf http://127.0.0.1:8000/metrics | grep -q 'http_requests_total{method="GET",path="/error",status="500"}'
+          set +x
+
+          docker rm -f app-test
+
+      - name: Assumir role na AWS via OIDC
+        if: github.event_name != 'pull_request'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login no ECR
+        id: ecr
+        if: github.event_name != 'pull_request'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push da imagem
+        id: push
+        if: github.event_name != 'pull_request'
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+
+          # Repositório imutável: reexecução no mesmo commit reaproveita a imagem.
+          if aws ecr describe-images \
+               --repository-name "$ECR_REPOSITORY" \
+               --image-ids imageTag="${{ github.sha }}" >/dev/null 2>&1; then
+            echo "imagem ${{ github.sha }} ja publicada; pulando o push"
+          else
+            docker tag "app:${{ github.sha }}" "$IMAGE"
+            docker push "$IMAGE"
+          fi
+
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # O pipeline não acessa o cluster: grava a nova tag no Git e o Argo CD aplica.
+  update-manifest:
+    needs: build-and-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Instalar kustomize
+        run: |
+          curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin kustomize
+          kustomize version
+
+      - name: Atualizar a tag da imagem
+        working-directory: gitops/demo-api
+        run: kustomize edit set image "demo-api=${{ needs.build-and-test.outputs.image }}"
+
+      - name: Commit e push do manifesto
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add gitops/demo-api/kustomization.yaml
+          if git diff --cached --quiet; then
+            echo "manifesto ja aponta para esta imagem"
+            exit 0
+          fi
+
+          git commit -m "deploy(demo-api): imagem ${GITHUB_SHA::7}"
+          git pull --rebase origin main
+          git push origin HEAD:main

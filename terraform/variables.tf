@@ -54,3 +54,15 @@ variable "alert_email" {
   type        = string
   default     = ""
 }
+
+variable "github_repository" {
+  description = "Repositório (owner/nome) cujo pipeline publica imagens no ECR. Em um fork, troque pelo seu"
+  type        = string
+  default     = "robson-devops/devops-03-eks-gitops"
+}
+
+variable "create_oidc_provider" {
+  description = "Cria o provider OIDC do GitHub, apagado no destroy. Use false se a conta já tiver um"
+  type        = bool
+  default     = true
+}

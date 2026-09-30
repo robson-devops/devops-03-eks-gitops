@@ -47,3 +47,8 @@ output "alert_topic_arn" {
   description = "Tópico SNS dos alertas"
   value       = module.alert_notification.topic_arn
 }
+
+output "pipeline_role_arn" {
+  description = "Role do GitHub Actions. Cadastre como secret AWS_ROLE_ARN no repositório"
+  value       = module.pipeline_identity.role_arn
+}

@@ -1,8 +1,12 @@
+import os
 import time
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+
+# Injetada no build pelo pipeline (SHA do commit); mostra qual versão responde.
+APP_VERSION = os.environ.get("APP_VERSION", "dev")
 
 app = FastAPI(title="demo-api")
 
@@ -34,7 +38,7 @@ async def record_metrics(request: Request, call_next):
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": APP_VERSION}
 
 
 @app.get("/ready")

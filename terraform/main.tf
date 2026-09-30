@@ -50,3 +50,12 @@ module "alert_notification" {
   oidc_issuer_url   = module.eks.oidc_issuer_url
   oidc_provider_arn = module.eks.oidc_provider_arn
 }
+
+module "pipeline_identity" {
+  source = "./modules/pipeline_identity"
+
+  name_prefix          = local.name_prefix
+  github_repository    = var.github_repository
+  create_oidc_provider = var.create_oidc_provider
+  ecr_repository_arn   = module.ecr.repository_arn
+}
