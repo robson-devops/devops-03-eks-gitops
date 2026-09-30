@@ -18,4 +18,4 @@ resources:
 images:
 - name: demo-api
   newName: 675344342862.dkr.ecr.us-east-1.amazonaws.com/devops-03-dev
-  newTag: bootstrap
+  newTag: 62c6b9d4d726140c913fed562933b933d573122a
